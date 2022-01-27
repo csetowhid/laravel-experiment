@@ -5,6 +5,7 @@ use Jenssegers\Date\Date;
 use App\Models\User;
 use Carbon\Carbon;
 use DateTime;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Rajurayhan\Bndatetime\BnDateTimeConverter; // on Top
 
@@ -57,40 +58,59 @@ class SocialShareButtonsController extends Controller
         // <a href="http://www.facebook.com/sharer.php?u=http://www.example.com" target="_blank">Share to FaceBook</a>
 
         $user = User::first();
-        // $now = new Carbon();
-        // $dt = new Carbon($user->created_at);
-        // $dt->setLocale('bn');
-        // $res = $dt->diffForHumans($now);
+        $now = new Carbon();
+        $dt = new Carbon($user->created_at);
+        $dt->setLocale('bn');
+        $res = $dt->diffForHumans($now);
 
-        // // $arra = explode(' ', $res);
-        // if (strpos($res,'9') !== false) { 
-        //     $url = str_replace('9', '৯', $res); 
+
+        // $res->split(3);
+        $replaced = Str::replaceFirst('2', '২', $res);
+        dd($replaced);
+
+
+        // Carbon::setLocale('bn');
+        // // $trd= $user->created_at->translatedFormat('l, F j, Y');
+        // // $trd= $user->created_at->translatedFormat('l, F j, Y: h:i A');
+        // $trd= $user->created_at->translatedFormat('F j, Y: h:i A');
+
+        // $engDATE = array('1','2','3','4','5','6','7','8','9','0','01','02','03','04','05','06','07','08','09','10','11','12','January','February','March','April',
+        // 'May','June','July','August','September','October','November','December','Saturday','Sunday',
+        // 'Monday','Tuesday','Wednesday','Thursday','Friday');
+        // $bangDATE = array('১','২','৩','৪','৫','৬','৭','৮','৯','০','০১','০২','০৩','০৪','০৫','০৬','০৭','০৮','০৯','১০','১১','১২','জানুয়ারী','ফেব্রুয়ারী','মার্চ','এপ্রিল','মে',
+        // 'জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর','শনিবার','রবিবার','সোমবার','মঙ্গলবার','
+        // বুধবার','বৃহস্পতিবার','শুক্রবার' 
+        // );
+        // $convertedDATE = str_replace($engDATE, $bangDATE, $trd);
+        // dd($convertedDATE);
+
+
+
+        $startTime = $request->start_time;
+        $endTime = $request->end_time;
+        $existingSlot = Bookings::where(function($query) use ($startTime,$endTime) {
+
+            $query->where('start_time','>=',$startTime)->where('end_time','<=',$endTime);
+
+        })->orWhere(function($query) use ($startTime,$endTime) {
+
+            $query->where('start_time','<=',$startTime)->where('end_time','>=',$startTime);
+            
+        })->orWhere(function($query) use ($startTime,$endTime) {
+            $query->where('start_time','<=',$endTime)->where('end_time','>=',$endTime);
+        })->orWhere(function($query) use ($startTime,$endTime) {
+            $query->where('start_time','<=',$startTime)->where('end_time','>=',$endTime);
+        })->first();
+
+        $data = [
+            'table_id' => $request->tables_id,
+            'users_id' => Auth::user()->id,
+            'start_time'=> $request->start_time,
+            'end_time'=> $request->end_time,
+        ];
+        $newBooking = Bookings::create($data);
+
         
-        // }  elseif(strpos($res,'1') !== false) { 
-        //     $url = str_replace('1', '১', $res); 
-    
-        // }
-        //  elseif(strpos($res,'0') !== false) { 
-        //     $url = str_replace('0', '০', $res); 
-      
-        // }
-       
-        // dd($url);
-
-
-        Carbon::setLocale('bn');
-        // $trd= $user->created_at->translatedFormat('l, F j, Y');
-        $trd= $user->created_at->translatedFormat('l, F j, Y: h:i A');
-
-        $engDATE = array('1','2','3','4','5','6','7','8','9','0','01','02','03','04','05','06','07','08','09','10','11','12','January','February','March','April',
-        'May','June','July','August','September','October','November','December','Saturday','Sunday',
-        'Monday','Tuesday','Wednesday','Thursday','Friday');
-        $bangDATE = array('১','২','৩','৪','৫','৬','৭','৮','৯','০','০১','০২','০৩','০৪','০৫','০৬','০৭','০৮','০৯','১০','১১','১২','জানুয়ারী','ফেব্রুয়ারী','মার্চ','এপ্রিল','মে',
-        'জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর','শনিবার','রবিবার','সোমবার','মঙ্গলবার','
-        বুধবার','বৃহস্পতিবার','শুক্রবার' 
-        );
-        $convertedDATE = str_replace($engDATE, $bangDATE, $trd);
-        dd($convertedDATE);
 
     }
 }
